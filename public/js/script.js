@@ -1,12 +1,17 @@
 var game = new Phaser.Game(512, 512, Phaser.AUTO, 'game-canvas');
 
 var main_state = {
+  score: 0,
+
+  scoreText: '',
+  
   preload: function() {
     this.game.load.image('bg-far', 'images/bg-far.png');
     this.game.load.image('bg-mid', 'images/bg-mid.png');
     this.game.load.image('ground2', 'images/ground2.png');
+    this.game.load.image('heart', 'images/heart_small.png')
 
-    this.game.load.atlasJSONHash('ground', 'images/ground.png', 'images/ground.json');
+    // this.game.load.atlasJSONHash('ground', 'images/ground.png', 'images/ground.json');
     this.game.load.atlasJSONHash('hero', 'images/hero.png', 'images/hero.json');
   },
 
@@ -36,12 +41,24 @@ var main_state = {
 
     hero.animations.add('walk', [0, 1, 2, 3], 6, true);
   
+    heartsGroup = game.add.group();
+    heartsGroup.enableBody = true;
+    hearts = [];
+    for (var i = 0; i < 8; i++) {
+      hearts.push(heartsGroup.create(i * 70, (300 + i * 10), 'heart'));
+      hearts[i].body.gravity.y = 6;
+      hearts[i].body.bounce.y = 0.7 + Math.random() * 0.2;
+    }
+
+    this.scoreText = game.add.text(8, 8, 'Score: 0', { fontSize: '32px', fill: 'white' });
     cursors = game.input.keyboard.createCursorKeys();
     game.camera.follow(hero);
   },
 
   update: function() {
     game.physics.arcade.collide(hero, ground);
+    game.physics.arcade.collide(heartsGroup, ground);
+    game.physics.arcade.overlap(hero, heartsGroup, this.collectHeart, null, this);
 
     if (cursors.right.isDown) {
       hero.body.velocity.x = 10;
@@ -58,6 +75,13 @@ var main_state = {
 
   restart_game: function() {
     this.game.state.start('main');
+  },
+
+  collectHeart: function(hero, heart) {
+    heart.kill();
+    this.score += 10;
+    console.log(this.score);
+    this.scoreText.text = 'Score:' + this.score;
   },
 
   rand_num: function(min, max) {
