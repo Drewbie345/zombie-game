@@ -27,20 +27,30 @@ var main_state = {
     for (var i = 0; i < 4; i++) {
       ground.push(groundGroup.create(0 + (128 * i), 420, 'ground2'));
       ground[i].body.immovable = true;
+      ground[i].anchor.setTo(0, 0);
     } 
 
-    hero = game.add.sprite(100, 280, 'hero');  
+    ledges = [];
+    for (var i = 0; i < 6; i++) {
+      ledges.push(groundGroup.create(128 + (32 * i), 275, 'ground2'));
+      ledges[i].body.immovable = true;
+      ledges[i].scale.setTo(0.25, 0.25);
+      ledges[i].anchor.setTo(0, 0);
+    }
+
+    hero = game.add.sprite(16, 300, 'hero'); 
     game.physics.arcade.enable(hero);
 
     hero.health = 50;
-    hero.anchor.setTo(1, 1);
+    hero.anchor.setTo(0.5, 1);
     hero.body.bounce.y = 0.2;
     hero.body.gravity.y = 100;
     hero.body.velocity.x = 0;
     hero.body.collideWorldBounds = true;
 
-    hero.animations.add('walk', [0, 1, 2, 3], 6, true);
-  
+    hero.animations.add('rightWalk', [0, 1, 2, 3], 6, true);
+    hero.animations.add('leftWalk', [0, 1, 2, 3], 6, true)
+
     heartsGroup = game.add.group();
     heartsGroup.enableBody = true;
     hearts = [];
@@ -57,14 +67,22 @@ var main_state = {
 
   update: function() {
     game.physics.arcade.collide(hero, ground);
+    game.physics.arcade.collide(hero, ledges);
     game.physics.arcade.collide(heartsGroup, ground);
     game.physics.arcade.overlap(hero, heartsGroup, this.collectHeart, null, this);
 
     if (cursors.right.isDown) {
+      hero.scale.x = 1;
       hero.body.velocity.x = 10;
-      hero.animations.play('walk');
-      far.tilePosition.x -= 1;
-      mid.tilePosition.x -= 3;
+      hero.animations.play('rightWalk');
+      far.tilePosition.x -= 0.5;
+      mid.tilePosition.x -= 2;
+    } else if (cursors.left.isDown) {
+      hero.scale.x = -1;
+      hero.body.velocity.x = -10;
+      hero.animations.play('leftWalk');
+      far.tilePosition.x += 0.5;
+      mid.tilePosition.x += 2;
     } else if (cursors.up.isDown) {
       hero.body.velocity.y = -50;
     } else {
@@ -80,7 +98,6 @@ var main_state = {
   collectHeart: function(hero, heart) {
     heart.kill();
     this.score += 10;
-    console.log(this.score);
     this.scoreText.text = 'Score:' + this.score;
   },
 
